@@ -34,7 +34,7 @@ class SelectState extends StatefulWidget {
   final String? Function(String?)? cityValidator;
 
   const SelectState({
-    Key? key,
+    super.key,
     required this.onCountryChanged,
     required this.onStateChanged,
     required this.onCityChanged,
@@ -55,7 +55,7 @@ class SelectState extends StatefulWidget {
     this.cityHint,
     this.cityDecoration,
     this.cityValidator,
-  }) : super(key: key);
+  });
 
   @override
   _SelectStateState createState() => _SelectStateState();
@@ -87,9 +87,12 @@ class _SelectStateState extends State<SelectState> {
   }
 
   void _setupFocusListeners() {
-    _countryFocusNode.addListener(() => setState(() => _isCountryFocused = _countryFocusNode.hasFocus));
-    _stateFocusNode.addListener(() => setState(() => _isStateFocused = _stateFocusNode.hasFocus));
-    _cityFocusNode.addListener(() => setState(() => _isCityFocused = _cityFocusNode.hasFocus));
+    _countryFocusNode.addListener(
+        () => setState(() => _isCountryFocused = _countryFocusNode.hasFocus));
+    _stateFocusNode.addListener(
+        () => setState(() => _isStateFocused = _stateFocusNode.hasFocus));
+    _cityFocusNode.addListener(
+        () => setState(() => _isCityFocused = _cityFocusNode.hasFocus));
   }
 
   @override
@@ -101,23 +104,30 @@ class _SelectStateState extends State<SelectState> {
   }
 
   Future<dynamic> getResponse() async {
-    final res = await rootBundle.loadString('packages/country_state_city_picker/lib/assets/country.json');
+    final res = await rootBundle.loadString(
+        'packages/country_state_city_picker/lib/assets/country.json');
     return jsonDecode(res);
   }
 
-  Future<void> getCountries() async {
+Future<void> getCountries() async {
+  try {
     final response = await getResponse();
     final countries = response
         .map<String>((data) => '${data['emoji']}    ${data['name']}')
         .toList();
+    
     if (mounted) {
       setState(() => _countries = countries);
     }
+  } catch (e) {
+    print('Error loading countries: $e');
   }
+}
 
-  Future<void> getStates() async {
-    if (_selectedCountry == null) return;
-    
+ Future<void> getStates() async {
+  if (_selectedCountry == null) return;
+
+  try {
     final response = await getResponse();
     final states = response
         .map((map) => StatusModel.StatusModel.fromJson(map))
@@ -129,11 +139,15 @@ class _SelectStateState extends State<SelectState> {
     if (mounted) {
       setState(() => _states = states);
     }
+  } catch (e) {
+    print('Error loading states: $e');
   }
+}
 
-  Future<void> getCities() async {
-    if (_selectedCountry == null || _selectedState == null) return;
+Future<void> getCities() async {
+  if (_selectedCountry == null || _selectedState == null) return;
 
+  try {
     final response = await getResponse();
     final cities = response
         .map((map) => StatusModel.StatusModel.fromJson(map))
@@ -147,9 +161,13 @@ class _SelectStateState extends State<SelectState> {
     if (mounted) {
       setState(() => _cities = cities);
     }
+  } catch (e) {
+    print('Error loading cities: $e');
   }
+}
 
-  InputDecoration _buildDecoration(InputDecoration? baseDecoration, String hint, bool isFocused) {
+  InputDecoration _buildDecoration(
+      InputDecoration? baseDecoration, String hint, bool isFocused) {
     return (baseDecoration ?? const InputDecoration()).copyWith(
       hintText: hint,
       contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -192,18 +210,20 @@ class _SelectStateState extends State<SelectState> {
       children: [
         if (label != null)
           Row(children: [
-            Text(label, style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey.shade700,
-            )),
+            Text(label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
+                )),
             if (isOptional)
               Padding(
                 padding: const EdgeInsets.only(left: 4),
-                child: Text('(Optional)', style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                )),
+                child: Text('(Optional)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade500,
+                    )),
               ),
           ]),
         if (label != null) const SizedBox(height: 8),
@@ -211,23 +231,28 @@ class _SelectStateState extends State<SelectState> {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            boxShadow: isFocused ? [
-              BoxShadow(
-                color: Colors.green.withOpacity(0.1),
-                blurRadius: 8,
-                spreadRadius: 2,
-                offset: const Offset(0, 2),
-              )
-            ] : [],
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.1),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : [],
           ),
           child: DropdownButtonFormField<String>(
             value: value,
             focusNode: focusNode,
-            decoration: _buildDecoration(decoration, hint ?? 'Choose $type', isFocused),
-            items: items.map((String value) => DropdownMenuItem(
-              value: value,
-              child: Text(value, style: widget.style),
-            )).toList(),
+            decoration:
+                _buildDecoration(decoration, hint ?? 'Choose $type', isFocused),
+            items: items
+                .map((String value) => DropdownMenuItem(
+                      value: value,
+                      child: Text(value, style: widget.style),
+                    ))
+                .toList(),
             onChanged: onChanged,
             validator: validator,
             dropdownColor: widget.dropdownColor,
